@@ -79,7 +79,7 @@ Nomenclature for Museum Cataloging (CHIN / AASLH), version 4.0 plus ongoing upda
 | Migrations run | 001 initial schema — run. 002 acquisition/location/valuations — **needs running** |
 | Nomenclature terms | **Not loaded yet** — need the JSON-LD file, then `scripts/import_nomenclature.py` |
 | Hosting | Vercel |
-| Sign-in | Email magic link. Supabase Auth URL Configuration must list `<site>/auth/callback` |
+| Sign-in | Email + password, no emails sent. Supabase "Confirm email" must be **off** |
 | Claude access | Supabase connector can't see the designID org yet — reconnect and select it |
 
 ---

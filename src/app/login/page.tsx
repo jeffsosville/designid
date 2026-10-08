@@ -1,71 +1,75 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
-  );
-}
-
-function LinkError() {
-  const msg = useSearchParams().get("error");
-  if (!msg) return null;
-  return (
-    <p className="mt-6 rounded border border-red-300 px-3 py-2 text-sm text-red-600">
-      Sign-in didn&apos;t complete: {msg}. Request a new link and open it in this same browser.
-    </p>
-  );
-}
-
-function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const router = useRouter();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStatus("sending");
+    setBusy(true);
+    setError("");
+    const f = new FormData(e.currentTarget);
+    const email = String(f.get("email"));
+    const password = String(f.get("password"));
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
+
+    const { data, error } =
+      mode === "signin"
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({ email, password });
+
     if (error) {
       setError(error.message);
-      setStatus("error");
-    } else {
-      setStatus("sent");
+      setBusy(false);
+      return;
     }
+    if (!data.session) {
+      setError('Account created, but Supabase is still set to confirm emails. Turn off "Confirm email" in Supabase, then sign in.');
+      setBusy(false);
+      setMode("signin");
+      return;
+    }
+    router.push("/");
+    router.refresh();
   }
+
+  const field = "rounded border border-stone-300 bg-transparent px-3 py-2";
 
   return (
     <main className="mx-auto mt-32 w-full max-w-sm px-4">
       <h1 className="font-serif text-3xl">designID</h1>
       <p className="mt-2 text-sm text-stone-500">Catalog your collection with museum-standard names.</p>
-      <LinkError />
-      {status === "sent" ? (
-        <p className="mt-8">Check {email} for a sign-in link.</p>
-      ) : (
-        <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-3">
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="rounded border border-stone-300 bg-transparent px-3 py-2"
-          />
-          <button disabled={status === "sending"} className="rounded bg-stone-900 px-3 py-2 text-white disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900">
-            {status === "sending" ? "Sending…" : "Email me a sign-in link"}
-          </button>
-          {status === "error" && <p className="text-sm text-red-600">{error}</p>}
-        </form>
-      )}
+      <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-3">
+        <input name="email" type="email" required autoComplete="email" placeholder="Email" className={field} />
+        <input
+          name="password"
+          type="password"
+          required
+          minLength={8}
+          autoComplete={mode === "signin" ? "current-password" : "new-password"}
+          placeholder="Password"
+          className={field}
+        />
+        <button disabled={busy} className="rounded bg-stone-900 px-3 py-2 text-white disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900">
+          {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+        </button>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+      </form>
+      <button
+        onClick={() => {
+          setMode(mode === "signin" ? "signup" : "signin");
+          setError("");
+        }}
+        className="mt-4 text-sm text-stone-500 underline"
+      >
+        {mode === "signin" ? "New here? Create an account" : "Have an account? Sign in"}
+      </button>
     </main>
   );
 }
