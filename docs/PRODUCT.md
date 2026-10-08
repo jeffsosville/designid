@@ -76,10 +76,10 @@ Nomenclature for Museum Cataloging (CHIN / AASLH), version 4.0 plus ongoing upda
 |---|---|
 | GitHub repo | github.com/jeffsosville/designid (`main`) |
 | Supabase | Project in the **designID** org (free plan, us-west-2). Migrations in `supabase/migrations/`, run in order in the SQL Editor |
-| Migrations run | 001 initial schema — run. 002 acquisition/location/valuations — **needs running** |
+| Migrations run | 001 initial schema — run. 002 acquisition/location/valuations and 003 no-login — **need running** |
 | Nomenclature terms | **Not loaded yet** — need the JSON-LD file, then `scripts/import_nomenclature.py` |
 | Hosting | Vercel |
-| Sign-in | Email + password, no emails sent. Supabase "Confirm email" must be **off** |
+| Sign-in | **None** — open demo, anyone with the URL can view and edit (migration 003). Add a passcode before sharing widely |
 | Claude access | Supabase connector can't see the designID org yet — reconnect and select it |
 
 ---

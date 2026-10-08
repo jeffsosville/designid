@@ -22,9 +22,6 @@ export default function NewItemPage() {
     const form = new FormData(e.currentTarget);
     const supabase = createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return router.push("/login");
-
     const value = form.get("current_value") as string;
     const price = form.get("acquisition_price") as string;
     const { data: item, error: itemErr } = await supabase
@@ -61,7 +58,7 @@ export default function NewItemPage() {
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       const ext = f.name.split(".").pop() ?? "jpg";
-      const path = `${user.id}/${item.id}/${crypto.randomUUID()}.${ext}`;
+      const path = `items/${item.id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("item-images").upload(path, f, { contentType: f.type });
       if (upErr) {
         setError(`Image upload failed: ${upErr.message}`);
