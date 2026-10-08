@@ -30,7 +30,9 @@ export default function LoginPage() {
       return;
     }
     if (!data.session) {
-      setError('Account created, but Supabase is still set to confirm emails. Turn off "Confirm email" in Supabase, then sign in.');
+      setError(
+        'No session came back. Either this email already has an account (use Sign in), or "Confirm email" is still on in Supabase.'
+      );
       setBusy(false);
       setMode("signin");
       return;
