@@ -2,6 +2,15 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { AddValuation } from "@/components/AddValuation";
+
+const money = (n: number | null | undefined) => (n == null ? null : `$${Number(n).toLocaleString()}`);
+const BASIS: Record<string, string> = {
+  insurance: "Insurance appraisal",
+  fair_market: "Fair market appraisal",
+  auction_estimate: "Auction estimate",
+  owner_estimate: "Owner estimate",
+};
 
 export default function ItemPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -20,7 +29,7 @@ async function ItemBody({ params }: { params: Promise<{ id: string }> }) {
 
   const { data: item } = await supabase
     .from("items")
-    .select("*, term:nomenclature_terms(label_en, path_en, definition_en), item_images(storage_path, is_primary, sort_order)")
+    .select("*, term:nomenclature_terms(label_en, path_en, definition_en), item_images(storage_path, is_primary, sort_order), valuations(id, valued_on, amount, basis, appraiser, notes, created_at)")
     .eq("id", id)
     .single();
   if (!item) notFound();
@@ -36,8 +45,18 @@ async function ItemBody({ params }: { params: Promise<{ id: string }> }) {
     ["Materials", item.materials],
     ["Dimensions", item.dimensions],
     ["Condition", item.condition],
-    ["Estimated value", item.estimated_value != null ? `$${Number(item.estimated_value).toLocaleString()}` : null],
+    ["Location", item.location],
   ];
+  const acquisition: [string, string | null][] = [
+    ["Acquired", item.acquired_date],
+    ["How", item.acquisition_method],
+    ["From", item.acquired_from],
+    ["Price paid", money(item.acquisition_price)],
+  ];
+  type V = { id: string; valued_on: string; amount: number; basis: string | null; appraiser: string | null; notes: string | null; created_at: string };
+  const valuations = [...((item.valuations as V[]) ?? [])].sort(
+    (a, b) => b.valued_on.localeCompare(a.valued_on) || b.created_at.localeCompare(a.created_at)
+  );
 
   return (
       <div className="mt-6 grid gap-10 md:grid-cols-2">
@@ -64,6 +83,39 @@ async function ItemBody({ params }: { params: Promise<{ id: string }> }) {
               </div>
             ))}
           </dl>
+          <h2 className="mt-8 text-sm font-medium text-stone-500">Value</h2>
+          {valuations.length === 0 ? (
+            <p className="mt-1 text-sm text-stone-500">No valuations yet.</p>
+          ) : (
+            <table className="mt-2 w-full text-sm">
+              <tbody>
+                {valuations.map((v, i) => (
+                  <tr key={v.id} className={i === 0 ? "font-medium" : "text-stone-500"}>
+                    <td className="py-1 pr-3">{v.valued_on}</td>
+                    <td className="py-1 pr-3">{money(v.amount)}</td>
+                    <td className="py-1 pr-3">{v.basis ? BASIS[v.basis] : ""}</td>
+                    <td className="py-1">{v.appraiser}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <AddValuation itemId={item.id} />
+
+          {acquisition.some(([, v]) => v) && (
+            <>
+              <h2 className="mt-8 text-sm font-medium text-stone-500">Acquisition</h2>
+              <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+                {acquisition.filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k} className="contents">
+                    <dt className="text-stone-500">{k}</dt>
+                    <dd>{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          )}
+
           {item.description && <p className="mt-6 whitespace-pre-line">{item.description}</p>}
           {item.provenance && (
             <>

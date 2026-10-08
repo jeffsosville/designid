@@ -6,6 +6,7 @@ type Row = {
   id: string;
   title: string;
   maker: string | null;
+  location: string | null;
   term: { label_en: string; path_en: string | null } | null;
   item_images: { storage_path: string; is_primary: boolean }[];
 };
@@ -32,10 +33,12 @@ async function GalleryBody({ searchParams }: { searchParams: Promise<{ cat?: str
 
   const { data } = await supabase
     .from("items")
-    .select("id, title, maker, term:nomenclature_terms(label_en, path_en), item_images(storage_path, is_primary)")
+    .select("id, title, maker, location, term:nomenclature_terms(label_en, path_en), item_images(storage_path, is_primary)")
     .order("created_at", { ascending: false });
 
   const items = (data as unknown as Row[]) ?? [];
+  const { data: values } = await supabase.from("item_current_value").select("item_id, amount");
+  const valueOf = new Map((values ?? []).map((v) => [v.item_id as string, Number(v.amount)]));
   const topOf = (r: Row) => r.term?.path_en?.split(" > ")[0] ?? "Unclassified";
   const categories = [...new Set(items.map(topOf))].sort();
   const shown = cat ? items.filter((r) => topOf(r) === cat) : items;
@@ -48,8 +51,16 @@ async function GalleryBody({ searchParams }: { searchParams: Promise<{ cat?: str
     : { data: [] };
   const urlFor = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
 
+  const total = shown.reduce((sum, r) => sum + (valueOf.get(r.id) ?? 0), 0);
+
   return (
     <>
+      {items.length > 0 && (
+        <p className="mt-2 text-sm text-stone-500">
+          {shown.length} {shown.length === 1 ? "item" : "items"}
+          {total > 0 && ` · current value $${total.toLocaleString()}`}
+        </p>
+      )}
       {categories.length > 1 && (
         <nav className="mt-6 flex flex-wrap gap-2 text-sm">
           <Link href="/" className={`rounded-full border px-3 py-1 ${!cat ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900" : ""}`}>All</Link>
@@ -78,6 +89,7 @@ async function GalleryBody({ searchParams }: { searchParams: Promise<{ cat?: str
                 </div>
                 <div className="mt-2 font-medium">{r.title}</div>
                 <div className="text-xs text-stone-500">{r.term?.label_en ?? "Unclassified"}{r.maker ? ` · ${r.maker}` : ""}</div>
+                {valueOf.has(r.id) && <div className="text-xs text-stone-500">${valueOf.get(r.id)!.toLocaleString()}</div>}
               </Link>
             );
           })}

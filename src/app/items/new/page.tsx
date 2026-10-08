@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { TermPicker, type Term } from "@/components/TermPicker";
 
 const CONDITIONS = ["excellent", "good", "fair", "poor"] as const;
+const METHODS = ["purchase", "auction", "gift", "inheritance", "commission", "trade", "other"] as const;
 
 export default function NewItemPage() {
   const router = useRouter();
@@ -24,7 +25,8 @@ export default function NewItemPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return router.push("/login");
 
-    const value = form.get("estimated_value") as string;
+    const value = form.get("current_value") as string;
+    const price = form.get("acquisition_price") as string;
     const { data: item, error: itemErr } = await supabase
       .from("items")
       .insert({
@@ -37,7 +39,11 @@ export default function NewItemPage() {
         dimensions: form.get("dimensions") || null,
         condition: form.get("condition") || null,
         provenance: form.get("provenance") || null,
-        estimated_value: value ? Number(value) : null,
+        location: form.get("location") || null,
+        acquired_date: form.get("acquired_date") || null,
+        acquired_from: form.get("acquired_from") || null,
+        acquisition_method: form.get("acquisition_method") || null,
+        acquisition_price: price ? Number(price) : null,
       })
       .select("id")
       .single();
@@ -46,6 +52,10 @@ export default function NewItemPage() {
       setError(itemErr?.message ?? "Could not save item");
       setSaving(false);
       return;
+    }
+
+    if (value) {
+      await supabase.from("valuations").insert({ item_id: item.id, amount: Number(value), basis: form.get("basis") || "owner_estimate" });
     }
 
     for (let i = 0; i < files.length; i++) {
@@ -104,8 +114,36 @@ export default function NewItemPage() {
               {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1"><span className="text-sm font-medium">Estimated value ($)</span><input name="estimated_value" type="number" step="0.01" className={field} /></label>
+          <label className="flex flex-col gap-1"><span className="text-sm font-medium">Location</span><input name="location" className={field} placeholder="Living room, storage unit B…" /></label>
         </div>
+
+        <fieldset className="grid grid-cols-1 gap-5 border-t border-stone-200 pt-5 sm:grid-cols-2 dark:border-stone-700">
+          <legend className="pr-2 text-sm font-medium text-stone-500">Acquisition</legend>
+          <label className="flex flex-col gap-1"><span className="text-sm font-medium">Date acquired</span><input name="acquired_date" type="date" className={field} /></label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">How</span>
+            <select name="acquisition_method" className={field} defaultValue="">
+              <option value="">—</option>
+              {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1"><span className="text-sm font-medium">From</span><input name="acquired_from" className={field} placeholder="Dealer, auction house, person" /></label>
+          <label className="flex flex-col gap-1"><span className="text-sm font-medium">Price paid ($)</span><input name="acquisition_price" type="number" step="0.01" className={field} /></label>
+        </fieldset>
+
+        <fieldset className="grid grid-cols-1 gap-5 border-t border-stone-200 pt-5 sm:grid-cols-2 dark:border-stone-700">
+          <legend className="pr-2 text-sm font-medium text-stone-500">Current value</legend>
+          <label className="flex flex-col gap-1"><span className="text-sm font-medium">Value ($)</span><input name="current_value" type="number" step="0.01" className={field} /></label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Basis</span>
+            <select name="basis" className={field} defaultValue="owner_estimate">
+              <option value="owner_estimate">Owner estimate</option>
+              <option value="insurance">Insurance appraisal</option>
+              <option value="fair_market">Fair market appraisal</option>
+              <option value="auction_estimate">Auction estimate</option>
+            </select>
+          </label>
+        </fieldset>
 
         <label className="flex flex-col gap-1"><span className="text-sm font-medium">Description</span><textarea name="description" rows={3} className={field} /></label>
         <label className="flex flex-col gap-1"><span className="text-sm font-medium">Provenance</span><textarea name="provenance" rows={2} className={field} /></label>

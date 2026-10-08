@@ -6,7 +6,7 @@ Stack: Next.js 16 (App Router), Tailwind, Supabase (Postgres, Auth, Storage).
 
 ## Setup
 
-1. **Database** – run `supabase/migrations/001_initial_schema.sql` in the Supabase SQL Editor.
+1. **Database** – run each file in `supabase/migrations/` in order (001, 002, …) in the Supabase SQL Editor.
 2. **Auth** – Supabase > Authentication > URL Configuration: set Site URL to your deployed URL and add `http://localhost:3000/auth/callback` (and the production `/auth/callback`) to Redirect URLs.
 3. **Env** – copy `.env.local.example` to `.env.local` and fill in the URL and publishable key.
 4. **Terms** – download the JSON-LD export from nomenclature.info (Integration page), then:
