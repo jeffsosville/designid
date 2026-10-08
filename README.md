@@ -18,7 +18,7 @@ Stack: Next.js 16 (App Router), Tailwind, Supabase (Postgres, Auth, Storage).
 ## What's here
 
 - `/` – gallery, filterable by top-level Nomenclature category
-- `/items/new` – upload photos, pick a Nomenclature term, add details
+- `/items/new` – photo first: `/api/identify` has Claude suggest the top 3 Nomenclature terms; confirm one (or search), add details
 - `/items/[id]` – item detail with the term's full hierarchy and definition
 
 No sign-in yet: anyone with the URL can view and edit. Add a passcode or real auth before sharing widely.

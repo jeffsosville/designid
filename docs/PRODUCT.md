@@ -49,12 +49,17 @@ Collector Systems (collectorsystems.com) is the closest comparable: deep, instit
 ### Location — *built*
 - Where each item is (room, storage, on loan)
 
+### AI-suggested term — *built*
+- Take or upload a photo on Add item; Claude (Sonnet) describes it, looks up candidate Nomenclature terms, and ranks the best three with a confidence and one-line reason
+- Pick one, or search the list yourself; title, maker, date, materials and description are pre-filled to correct
+- Each item stores the AI result and which suggestion was picked (`ai_result`, `ai_pick_rank`), so accuracy can be measured
+- Cost: roughly 1–2¢ per photo on Sonnet. With no sign-in, anyone with the URL can run it
+
 ### Next — *proposed, in order*
 1. **Insurance / appraisal report** — PDF of the collection or a filtered set, with photos, terms and current values
 2. **Edit item** — change details and photos after saving
-3. **AI-suggested term** — upload a photo, get the likely Nomenclature term to confirm
-4. **Public gallery page** — one shareable page per collection or selection
-5. **Collections** — group items (by room, by designer, for a loan); tables exist, no screens yet
+3. **Public gallery page** — one shareable page per collection or selection
+4. **Collections** — group items (by room, by designer, for a loan); tables exist, no screens yet
 
 ### Not now
 - Native iOS/Android apps — the web app works on a phone camera
@@ -76,8 +81,9 @@ Nomenclature for Museum Cataloging (CHIN / AASLH), version 4.0 plus ongoing upda
 |---|---|
 | GitHub repo | github.com/jeffsosville/designid (`main`) |
 | Supabase | Project in the **designID** org (free plan, us-west-2). Migrations in `supabase/migrations/`, run in order in the SQL Editor |
-| Migrations run | 001 initial schema — run. 002 acquisition/location/valuations and 003 no-login — **need running** |
-| Nomenclature terms | **Not loaded yet** — need the JSON-LD file, then `scripts/import_nomenclature.py` |
+| Migrations run | 001, 003 no-login, 004 Nomenclature search, 005 AI identification — run. 002 acquisition/location/valuations — check |
+| Nomenclature terms | **Loaded** — 15,413 current terms with alternate names and full hierarchy paths (Oct 8, 2026) |
+| AI | `ANTHROPIC_API_KEY` set in Vercel (server-only). Optional `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`) |
 | Hosting | Vercel |
 | Sign-in | **None** — open demo, anyone with the URL can view and edit (migration 003). Add a passcode before sharing widely |
 | Claude access | Supabase connector can't see the designID org yet — reconnect and select it |
